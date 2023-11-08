@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Start WebRTC</title>
+</head>
+<body>
+  <h1>Camera Feed</h1>
+
+  <video id="remoteVideo" autoplay muted></video>
+  
+  <button id="start-btn">Start</button>
+
+  <script>
+    const startBtn = document.getElementById('start-btn');
+    const remoteVideo = document.getElementById('remoteVideo');
+    const cameraID = 'camera-1';
+    const userID = 'user-1';
+    const config = {
+      iceServers: [
+        {
+          urls: 'stun:stun.l.google.com:19302'
+        }
+      ]
+    };
+    const ws = new WebSocket('ws://localhost:8080');
+    const pc = new RTCPeerConnection(config);
+    
+    // registering user with signaling server
+
+    ws.addEventListener('open', () => {
+      ws.send(JSON.stringify({
+        type: 'register',
+        data: {
+          id: userID,
+          clientType: 'user',
+        }
+      }));
+    });
+
+    pc.ontrack = ({ track, streams }) => {
+      console.log('Got remote track:', track, 'and streams:', streams);
+
+      if (remoteVideo.srcObject) {
+        return;
+      }
+      remoteVideo.srcObject = streams[0];
+    }
+
+    // ice candidate handling
+
+    pc.onicecandidate = ({ candidate }) => {
+      if (candidate) {
+        ws.send(JSON.stringify({
+          type: 'ice-candidate',
+          target: cameraID,
+          sender: userID,
+          data: candidate,
+        }), (err) => {
+          if (err) {
+            console.error('Error sending ice candidate to camera', err);
+          } else {
+            console.log('Ice candidate sent to camera: ', candidate);
+          }
+        });
+      }
+    };
+
+    // handling answer or ice candidates from camera
+
+    ws.addEventListener('message', async (event) => {
+      console.log('Got message from signaling server:', event.data);
+      const parsedData = JSON.parse(event.data);
+      const { type } = parsedData
+
+      try {
+          if (type === 'answer') {
+          const { data } = parsedData;
+          const answer = new RTCSessionDescription(data);
+          await pc.setRemoteDescription(answer);
+        } else if (type === 'ice-candidate') {
+          const { data } = parsedData;
+          const candidate = new RTCIceCandidate(data);
+          await pc.addIceCandidate(candidate);
+        } else if (type === 'error') {
+          console.error('Error from signaling server:', parsedData.error);
+        } else {
+          console.warn('Unrecognized message type:', type);
+        }
+      } catch (err) {
+        console.error('Failed to handle message', err);
+      }
+    });
+
+    
+    // Start the WebRTC negotiation process
+    startBtn.onclick = async () => {
+      console.log('Starting WebRTC...');
+      try {
+        const offer = await pc.createOffer({
+          offerToReceiveAudio: false,
+          offerToReceiveVideo: true,
+        });
+
+        await pc.setLocalDescription(offer);
+
+        // sending offer over signal channel
+        ws.send(JSON.stringify({
+          type: 'offer',
+          target: cameraID,
+          sender: userID,
+          data: pc.localDescription,
+        }), (err) => {
+          if (err) {
+            console.error('Error sending offer to camera', err);
+          } else {
+            console.log('Offer sent to camera: ', offer);
+          }
+        });
+      } catch (err) {
+        console.error('Failed to create offer', err);
+      }
+    };
+  </script>
+</body>
+</html>
