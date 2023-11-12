@@ -4,7 +4,7 @@ import { fileURLToPath } from 'url';
 import MongoStore from 'connect-mongo';
 import session from 'express-session';
 import morgan from 'morgan';
-import connect from './mongo/index.js';
+import connect, { resetDatabase } from './mongo/index.js';
 import config from './utils/config.js';
 import registerRouter from './routes/register.js';
 
@@ -14,6 +14,9 @@ const __dirname = dirname(__filename);
 const app = express();
 
 connect(config.DEV_MONGODB_URI);
+if (process.env.NODE_ENV === 'development') {
+  resetDatabase();
+}
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
@@ -22,13 +25,17 @@ app.use(express.static('public'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Express session
+// express-session middleware
 app.use(session({
   secret: config.SESSION_SECRET,
   resave: false,
   saveUninitialized: true,
   store: MongoStore.create({ mongoUrl: config.DEV_MONGODB_URI }),
-  cookie: { secure: true, maxAge: 24 * 60 * 60 * 1000, httpOnly: true }, // 1 day
+  cookie: {
+    secure: true,
+    maxAge: 24 * 60 * 60 * 1000, // 1 day
+    httpOnly: true,
+  },
 }));
 
 // Routes
