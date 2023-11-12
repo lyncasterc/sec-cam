@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SecCam | Register</title>
+</head>
+
+<style>
+  .error-message {
+    color: red;
+  }
+
+  .general-error-container, .input-error {
+    display: none;
+  }
+
+  .general-error-container.show, .input-error.show {
+    display: block;
+  }
+
+  .register-form-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+  }
+
+  .password-reqs li {
+    margin-bottom: 5px;
+    font-weight: bold;
+    font-size: 14px;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 10px;
+  }
+
+  .form-group label {
+    margin-bottom: 5px;
+  }
+
+  .form-group input {
+    padding: 5px;
+    border-radius: 5px;
+    border: 1px solid #868686;
+  }
+
+</style>
+<body>
+  
+  <div class="register-form-container">
+  <h1>Create an Account</h1>
+
+    <div class="general-error-container">
+      <p class="error-message"></p>
+    </div>
+
+    <form action="/register" method="POST" class="register-form">
+
+      <div class="form-group">
+        <label for="username">Username</label>
+        <input type="text" name="username" id="username" placeholder="Username"  minlength="3" autocomplete="username" required>
+        <div class="input-error username-error">
+          <p class="error-message"></p>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="username">Camera ID</label>
+        <input type="text" name="cameraID" id="cameraId" placeholder="Camera ID" required>
+        <div class="input-error cameraId-error">
+          <p class="error-message"></p>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" name="password" id="password" placeholder="Password"  minlength="10" maxlength="128" autocomplete="new-password" required>
+        <div class="input-error password-error">
+          <p class="error-message"></p>
+        </div>
+        <ul class="password-reqs">
+          <li>Must be between 10 - 128 characters.</li>
+          <li>Must contain at least 1 uppercase letter</li>
+          <li>Must contain at least 1 lowercase letter</li>
+          <li>Must contain at least 1 number</li>
+          <li>Must contain at least 1 special character eg. !@#$%^&*()\-+</li>
+          <li>Must <i>not</i> contain spaces.</li>
+        </ul>
+      </div>
+
+      <div class="form-group">
+        <label for="confirmPassword">Confirm Password</label>
+        <input type="password" name="confirmPassword" id="confirmPassword" placeholder="Confirm Password"  minlength="10" maxlength="128" autocomplete="new-password" required>
+        <div class="input-error confirm-password-error">
+          <p class="error-message"></p>
+        </div>
+      </div>
+
+      <button type="submit">Register</button>
+    </form>
+
+  </div>
+
+  <script src="/js/register.js"></script>
+</body>
+</html>

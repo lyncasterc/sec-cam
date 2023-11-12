@@ -6,6 +6,7 @@ import session from 'express-session';
 import morgan from 'morgan';
 import connect from './mongo/index.js';
 import config from './utils/config.js';
+import registerRouter from './routes/register.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -29,6 +30,9 @@ app.use(session({
   store: MongoStore.create({ mongoUrl: config.DEV_MONGODB_URI }),
   cookie: { secure: true, maxAge: 24 * 60 * 60 * 1000, httpOnly: true }, // 1 day
 }));
+
+// Routes
+app.use('/register', registerRouter);
 
 app.use(morgan('dev'));
 export default app;

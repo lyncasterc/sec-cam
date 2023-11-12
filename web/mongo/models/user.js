@@ -6,6 +6,7 @@ const userSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   registeredCams: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Camera' }],
+  verified: { type: Boolean, default: false },
 });
 
 // Hashing password before saving to database

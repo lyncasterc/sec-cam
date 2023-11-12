@@ -2,8 +2,10 @@
 import mongoose from 'mongoose';
 
 const cameraSchema = new mongoose.Schema({
-  name: { type: String, required: true },
+  name: { type: String },
+  cameraId: { type: String, required: true, unique: true },
   owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  verified: { type: Boolean, default: false },
 });
 
 cameraSchema.set('toJSON', {
