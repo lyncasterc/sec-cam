@@ -93,6 +93,7 @@ form.addEventListener('submit', async (e) => {
     try {
       const response = await fetch('/register', {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
