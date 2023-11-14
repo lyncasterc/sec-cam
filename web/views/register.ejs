@@ -56,7 +56,11 @@
   <h1>Create an Account</h1>
 
     <div class="general-error-container">
-      <p class="error-message"></p>
+      <p class="error-message">
+        <% if (typeof error !== 'undefined') { %>
+          <%= error %>
+        <% } %>
+      </p>
     </div>
 
     <form action="/register" method="POST" class="register-form">
