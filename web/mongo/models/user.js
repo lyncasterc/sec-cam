@@ -1,11 +1,13 @@
 /* eslint-disable no-param-reassign */
 import mongoose from 'mongoose';
 import bcrypt from 'bcrypt';
+import Camera from './camera.js';
 
 const userSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   registeredCams: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Camera' }],
+  messageToken: { type: String },
   verified: { type: Boolean, default: false },
 });
 
@@ -17,6 +19,13 @@ userSchema.pre('save', async function hashPassword(next) {
     const hash = await bcrypt.hash(user.password, salt);
     user.password = hash;
   }
+  next();
+});
+
+// deleting all associated cameras before deleting user
+userSchema.pre('deleteOne', { document: true, query: false }, async function deleteCameras(next) {
+  const user = this;
+  await Camera.deleteMany({ owner: user._id });
   next();
 });
 
