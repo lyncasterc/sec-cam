@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SecCam | Camera Setup</title>
+</head>
+
+<style>
+  .camera-setup-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .camera-info {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .camera-id {
+    font-weight: bold;
+  }
+
+  .camera-status {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: red;
+    display: inline-block;
+    margin-left: 10px;
+  }
+
+  .buttons {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin-top: 1rem;
+  }
+
+  .next-btn {
+    display: none;
+  }
+
+  .next-btn.show {
+    display: inline-block;
+  }
+
+  .camera-status.loading {
+    animation: pulse 1s infinite;
+  }
+
+  .camera-status.connected {
+    background-color: rgb(0, 179, 0);
+  }
+
+  .camera-status-message {
+    margin-left: 10px;
+    font-size: 12px;
+  }
+
+  @keyframes pulse {
+    0% {
+      background-color: red;
+    }
+    50% {
+      background-color: orange;
+    }
+    100% {
+      background-color: red;
+    }
+  }
+
+</style>
+<body>
+
+  <div class="camera-setup-container">
+    <h1>Camera Setup</h1>
+    <ol class="instructions">
+      <li>Connect your camera to a network.</li>
+      <li>Press the "Test Connection" button below.</li>
+      <li>When your camera is found, the red status indicator will turn green.</li>
+      <li>After a successful connection, hit the next button to complete your registration.</li>
+    </ol>
+
+
+    <div class="camera-info-container">
+      <div class="camera-info">
+          <span class="camera-id">Camera ID: <%- cameraId %> </span>
+          <span class="camera-status"></span>
+          <span class="camera-status-message"></span>
+      </div>
+    </div>
+
+    <div class="buttons">
+      <button class="cancel-btn">Cancel</button>
+      <button class="test-btn">Test Connection</button>
+      <button class="next-btn">Next</button>
+  </div>
+  <script>
+    const remainingTime = parseInt('<%- remainingTime %>');
+    const token = '<%- token %>';
+    const cameraId = '<%- cameraId %>';
+    const username = '<%- username %>';
+  </script>
+  <script src="/js/camera-setup.js"></script>
+</body>
+</html>
