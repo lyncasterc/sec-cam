@@ -6,10 +6,12 @@ const {
   DEV_MONGODB_URI,
   PORT,
   SESSION_SECRET,
+  SHARED_SECRET,
 } = process.env;
 
 export default {
   DEV_MONGODB_URI,
   PORT,
   SESSION_SECRET,
+  SHARED_SECRET,
 };

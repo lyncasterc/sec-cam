@@ -6,7 +6,7 @@
     "start": "node index.js",
     "dev": "NODE_ENV=development nodemon index.js",
     "docker:mongo": "docker-compose -f docker-compose.dev.yml up",
-    "start:dev": "concurrently \"npm run docker:mongo\" \"npm run dev\""
+    "start:dev": "concurrently \"npm run docker:mongo\" \"sleep 5 && npm run dev\""
   },
   "dependencies": {
     "bcrypt": "^5.1.1",
@@ -21,6 +21,7 @@
     "http-errors": "~1.6.3",
     "mongoose": "^8.0.0",
     "morgan": "~1.9.1",
+    "uuid": "^9.0.1",
     "ws": "^8.14.2"
   },
   "devDependencies": {
