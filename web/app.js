@@ -13,10 +13,14 @@ const __dirname = dirname(__filename);
 
 const app = express();
 
-connect(config.DEV_MONGODB_URI);
-if (process.env.NODE_ENV === 'development') {
-  resetDatabase();
+(async () => {
+  await connect(config.DEV_MONGODB_URI);
+
+  if (process.env.NODE_ENV === 'development') {
+    await resetDatabase();
+  }
 }
+)();
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
@@ -24,6 +28,8 @@ app.set('views', path.join(__dirname, 'views'));
 app.use(express.static('public'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+app.set('trust proxy', 1);
 
 // express-session middleware
 app.use(session({

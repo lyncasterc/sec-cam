@@ -14,15 +14,21 @@ const connect = async (uri) => {
 };
 
 /**
- * Drop the entire database
+ * Drop all documents from all collections in the database.
 */
 export const resetDatabase = async () => {
-  try {
-    await mongoose.connection.dropDatabase();
-    console.log('Database dropped.');
-  } catch (error) {
-    console.error('Error dropping database: ', error.message);
+  const collections = Object.keys(mongoose.connection.collections);
+  for (let i = 0; i < collections.length; i += 1) {
+    const collection = collections[i];
+    try {
+      // eslint-disable-next-line no-await-in-loop
+      await mongoose.connection.collections[collection].deleteMany({});
+    } catch (error) {
+      console.error('Error dropping collection: ', collection);
+    }
   }
+
+  console.log('Database reset.');
 };
 
 export default connect;
