@@ -1,14 +1,5 @@
 /* eslint-disable no-alert */
 /* eslint-disable no-undef */
-
-if (remainingTime > 0) {
-  setTimeout(() => {
-    window.location.href = '/register/session-expired';
-  }, remainingTime);
-} else {
-  window.location.href = '/register/session-expired';
-}
-
 const ws = new WebSocket(`wss://${window.location.host}`);
 const testBtn = document.querySelector('.test-btn');
 const cameraStatus = document.querySelector('.camera-status');
@@ -105,7 +96,7 @@ cancelBtn.addEventListener('click', async () => {
 // this completes the registration process.
 nextBtn.addEventListener('click', async () => {
   const response = await fetch('/register/confirm', {
-    method: 'POST',
+    method: 'PATCH',
     credentials: 'include',
     data: {
       cameraId,
@@ -115,13 +106,23 @@ nextBtn.addEventListener('click', async () => {
 
   if (response.redirected) {
     window.location.href = response.url;
+  } else if (response.status === 400) {
+    const data = await response.json();
+
+    if (data.error && /camera not connected/i.test(data.error)) {
+      alert('Camera disconnected. Please try again.');
+      cameraStatus.classList.remove('connected');
+      cameraStatusMessage.textContent = 'Camera not found.';
+      nextBtn.classList.remove('show');
+      testBtn.disabled = false;
+    } else {
+      alert('Something went wrong. Please try registering again.');
+      await cancelRegistration();
+    }
+  } else {
+    alert('Something went wrong. Please try registering again.');
+    await cancelRegistration();
   }
-
-  // if response is not redirected, show alert, cancel registration
-
-  alert('Something went wrong. Please try registering again.');
-
-  await cancelRegistration();
 });
 
 // handle messages from the signal channel
