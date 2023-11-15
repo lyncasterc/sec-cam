@@ -47,7 +47,23 @@ async function deleteUserByUsername(username) {
   }
 }
 
+/**
+ * Updates the user with the given username with the provided update object.
+ * @param {string} username - The username of the user to update.
+ * @param {Object} update - The update object to apply to the user.
+ * @returns {Promise<void>} - A Promise that resolves when the user is updated.
+ * @throws {Error} - If the user is not found or not updated.
+ */
+async function updateUserByUsername(username, update) {
+  const user = User.findOneAndUpdate({ username }, update, { new: true });
+
+  if (!user) {
+    throw new Error('User not found.');
+  }
+}
+
 export default {
   validateUserMessageToken,
   deleteUserByUsername,
+  updateUserByUsername,
 };
