@@ -6,7 +6,7 @@ import session from 'express-session';
 import morgan from 'morgan';
 import connect, { resetDatabase } from './mongo/index.js';
 import config from './utils/config.js';
-import registerRouter from './routes/register.js';
+import logoutRouter from './routes/logout.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -44,8 +44,9 @@ app.use(session({
   },
 }));
 
-// Routes
-app.use('/register', registerRouter);
-
 app.use(morgan('dev'));
+
+// Routes
+app.use('/logout', logoutRouter);
+
 export default app;

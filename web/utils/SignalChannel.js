@@ -181,6 +181,15 @@ class SignalChannel {
 
     return token === expectedToken;
   }
+
+  /**
+   * Checks if a camera is connected.
+   * @param {string} cameraId - The ID of the camera to check.
+   * @returns {boolean} Returns true if the camera is connected, false otherwise.
+   */
+  isCameraConnected(cameraId) {
+    return !!this.cameraClients[cameraId];
+  }
 }
 
 export default SignalChannel;
