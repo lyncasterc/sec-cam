@@ -22,16 +22,45 @@ const cameraStatusMessage = document.querySelector('.camera-status-message');
  *
  * @returns {Promise<void>}
  */
-async function cancelRegistration() {
-  const response = await fetch('/register/cancel', {
-    method: 'DELETE',
-    credentials: 'include',
-  });
+async function cancelRegistration({ isExpired = false } = { }) {
+  try {
+    const response = await fetch(`/register/cancel?expired=${isExpired}`, {
+      method: 'DELETE',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        cameraId,
+        username,
+      }),
+    });
 
-  if (response.redirected) {
-    window.location.href = response.url;
+    if (response.redirected) {
+      window.location.href = response.url;
+    } else {
+      alert('Something went wrong. Please try cancelling again.');
+    }
+  } catch (error) {
+    console.error(error);
+    alert('Something went wrong. Please try cancelling again.');
   }
 }
+
+// Set the remaining time for the registration process.
+// If time runs out, expire the registration session.
+
+(async () => {
+  if (remainingTime > 0) {
+    setTimeout(async () => {
+      alert('Registration session expired. Please try again.');
+      await cancelRegistration({ isExpired: true });
+    }, remainingTime);
+  } else {
+    alert('Registration session expired. Please try again.');
+    await cancelRegistration({ isExpired: true });
+  }
+})();
 
 // send a register message to the signal channel when the connection is opened
 ws.addEventListener('open', () => {

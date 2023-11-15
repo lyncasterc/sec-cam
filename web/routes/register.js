@@ -49,36 +49,6 @@ router.get('/camera-setup', async (req, res) => {
   });
 });
 
-router.get('/session-expired', async (req, res) => {
-  // If user is already logged in, redirect to home page.
-  if (req.session.isLoggedIn) {
-    return res.redirect('/');
-  }
-
-  // If user is not in registration process, redirect to login page.
-  if (!req.session.inRegistrationProcess) {
-    return res.redirect('/login');
-  }
-
-  // If registration session has expired, delete user and camera from database.
-  if (Date.now() >= req.session.registrationEnd) {
-    try {
-      const { username } = req.session;
-
-      await userService.deleteUserByUsername(username);
-
-      req.session.destroy();
-
-      return res.render('/register', { error: 'Registration session expired. Please try again.' });
-    } catch (error) {
-      console.error(error);
-      return res.status(500).send({ error: 'Something went wrong. Please try again.' });
-    }
-  }
-
-  return res.redirect('/register/camera-setup');
-});
-
 router.post('/', [
   body('username')
     .isString()
