@@ -7,6 +7,8 @@ import morgan from 'morgan';
 import connect, { resetDatabase } from './mongo/index.js';
 import config from './utils/config.js';
 import logoutRouter from './routes/logout.js';
+import indexRouter from './routes/index.js';
+import loginRouter from './routes/login.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -48,5 +50,7 @@ app.use(morgan('dev'));
 
 // Routes
 app.use('/logout', logoutRouter);
+app.use('/', indexRouter);
+app.use('/login', loginRouter);
 
 export default app;
