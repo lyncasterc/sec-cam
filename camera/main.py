@@ -14,9 +14,10 @@ import hmac
 load_dotenv()
 
 shared_secret = os.getenv('SHARED_SECRET')
-user_id = None
-ws_server = 'ws://<SERVER_GOES_HERE>'
+server = os.getenv('SERVER')
+ws_server = f'ws://{server}'
 camera_id = os.getenv('CAMERA_ID')
+user_id = None
 
 
 import hmac
