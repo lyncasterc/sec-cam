@@ -55,10 +55,10 @@ async function deleteUserByUsername(username) {
  * @throws {Error} - If the user is not found or not updated.
  */
 async function updateUserByUsername(username, update) {
-  const user = User.findOneAndUpdate({ username }, update, { new: true });
+  const user = await User.findOneAndUpdate({ username }, update, { new: true });
 
-  if (!user) {
-    throw new Error('User not found.');
+  if (!user || (update.verified && !user.verified)) {
+    throw new Error('User not found or not updated.');
   }
 }
 
