@@ -49,7 +49,7 @@ app.use(session({
 app.use(morgan('dev'));
 
 // Routes
-app.use('/logout', logoutRouter);
+app.use('/api/logout', logoutRouter);
 app.use('/', indexRouter);
 app.use('/login', loginRouter);
 
