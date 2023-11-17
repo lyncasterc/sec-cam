@@ -7,6 +7,7 @@ const {
   PORT,
   SESSION_SECRET,
   SHARED_SECRET,
+  METERED_API_KEY,
 } = process.env;
 
 export default {
@@ -14,4 +15,5 @@ export default {
   PORT,
   SESSION_SECRET,
   SHARED_SECRET,
+  METERED_API_KEY,
 };
