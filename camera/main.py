@@ -10,6 +10,7 @@ import os
 from dotenv import load_dotenv
 import hashlib
 import hmac
+import requests
 
 load_dotenv()
 
@@ -18,7 +19,6 @@ server = os.getenv('SERVER')
 metered_api_key = os.getenv('METERED_API_KEY')
 ws_server = f'ws://{server}'
 camera_id = os.getenv('CAMERA_ID')
-user_id = None
 
 def get_ice_servers():
     """
@@ -123,6 +123,10 @@ def create_peer_connection(config, websocket, user_id, camera_id):
     return pc
 
 async def main():
+    config = RTCConfiguration(iceServers=get_ice_servers())
+    pc = None
+    user_id = None
+    
     # retrying initial WS connection every 5 seconds if it fails
     while True:
         try:
@@ -138,20 +142,138 @@ async def main():
                     }
                 }))
                 response = await websocket.recv()
-                response = json.loads(response)
+                response = json.loads(response) 
+                # TODO: should camera also check if server sends back the correct HMAC signature?
                 if response['type'] == 'camera-register-ack':
                     print('ack received. camera registered.')
+                    
+                    # this loop keeps the ws connection alive and listens for incoming messages
                     while True:
                         try:
                             message = await websocket.recv()
                             parsed_message = json.loads(message)
                             request_type = parsed_message['type']
+                            
+                            if request_type == 'offer':
+                                # macOS specific - needs to be changed on other platforms
+                                player = MediaPlayer('default:none', format='avfoundation', options={
+                                    'video_size': '640x480', 
+                                    'framerate': '30'
+                                })
+                                
+                                offer = RTCSessionDescription(sdp=parsed_message['data']['sdp'], type='offer')
+                                
+                                if not user_id:
+                                    user_id = parsed_message['sender']
+                                
+                                if not pc:
+                                    pc = create_peer_connection(config, websocket, user_id, camera_id)
+                                    print('created peer connection')
+
+                                print("received offer, ", parsed_message['data'])
+                                
+                                if player:
+                                    pc.addTrack(player.video)
+                                    
+                                # setting remote description
+                                try:
+                                    await pc.setRemoteDescription(offer)
+                                    print("set remote description")
+                                except Exception as e:
+                                    print(f"error setting remote description: {e}")
+                                    traceback.print_exc()
+                                    break
+
+                                #  answer
+                                try:
+                                    answer = await pc.createAnswer()
+                                    print("created answer", answer)
+                                except Exception as e:
+                                    print(f"error creating answer: {e}")
+                                    traceback.print_exc()
+                                    break
+                                
+                                # setting local description
+                                try: 
+                                    await pc.setLocalDescription(answer)
+                                    print("set local description")
+                                except Exception as e:
+                                    print(f"error setting local description: {e}")
+                                    traceback.print_exc()
+                                    break
+                                
+                                # send answer
+                                
+                                try:  
+                                    await websocket.send(json.dumps({
+                                        'type': 'answer',
+                                        'target': user_id,
+                                        'sender': camera_id,
+                                        'clientType': 'camera',
+                                        'data': {
+                                            'sdp': pc.localDescription.sdp,
+                                            'type': pc.localDescription.type
+                                        }
+                                    }))
+                                    
+                                    print("sent answer") 
+                                except Exception as e: 
+                                    print(f"error sending answer: {e}")
+                                    traceback.print_exc()
+                                    break
+                                
+                            elif request_type == 'ice-candidate':
+                                candidate_data = parsed_message['data']
+                                parsed_candidate_info = parse_ice_candidate(candidate_data['candidate'])
+                                
+                                if not user_id:
+                                    user_id = parsed_message['sender']
+                                
+                                if not pc:
+                                    pc = create_peer_connection(config, websocket, user_id, camera_id)
+                                    print('created peer connection')
+
+                                print("received ice candidate", parsed_candidate_info)
+                                
+                                ice_candidate = RTCIceCandidate(
+                                    sdpMid=candidate_data['sdpMid'],
+                                    sdpMLineIndex=candidate_data['sdpMLineIndex'],
+                                    foundation=parsed_candidate_info['foundation'],
+                                    component=int(parsed_candidate_info['component']),
+                                    protocol=parsed_candidate_info['protocol'],
+                                    priority=int(parsed_candidate_info['priority']),
+                                    ip=parsed_candidate_info['ip'],
+                                    port=int(parsed_candidate_info['port']),
+                                    type=parsed_candidate_info['type'],
+                                )
+                                
+                                # adding ice candidates
+                                try :
+                                    await pc.addIceCandidate(ice_candidate)
+                                    print("added ice candidate")
+                                except Exception as e:
+                                    print(f"error adding ice candidate: {e}")
+                                    traceback.print_exc()
+                                    break
+                        
+                            elif request_type == 'close-webrtc':
+                                if pc:
+                                    await pc.close()
+                                    pc = None
+                                    print("closing webrtc")
+
                         except ConnectionClosed:
                             print("connection closed")
                             break
+                    
+                    if pc:
+                        await pc.close()
+                        pc = None
         except Exception as e:
             print(f"connection failed: {e}")
             traceback.print_exc()
+            
+            print("retrying in 5 seconds...")
             await asyncio.sleep(5)
 
 asyncio.run(main())
