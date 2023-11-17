@@ -24,6 +24,9 @@
     "uuid": "^9.0.1",
     "ws": "^8.14.2"
   },
+  "engines": {
+    "node": "18.x"
+  },
   "devDependencies": {
     "concurrently": "^8.2.2",
     "eslint": "^8.53.0",

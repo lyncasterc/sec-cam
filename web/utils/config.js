@@ -4,6 +4,7 @@ dotenv.config();
 
 const {
   DEV_MONGODB_URI,
+  MONGODB_URI,
   PORT,
   SESSION_SECRET,
   SHARED_SECRET,
@@ -12,6 +13,7 @@ const {
 
 export default {
   DEV_MONGODB_URI,
+  MONGODB_URI,
   PORT,
   SESSION_SECRET,
   SHARED_SECRET,

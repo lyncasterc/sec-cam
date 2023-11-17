@@ -29,5 +29,6 @@ module.exports = {
   },
   ignorePatterns: [
     'minimal-example/',
+    'node_modules/',
   ],
 };

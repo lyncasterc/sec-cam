@@ -15,8 +15,10 @@ const __dirname = dirname(__filename);
 
 const app = express();
 
+const mongoUri = process.env.NODE_ENV === 'development' ? config.DEV_MONGODB_URI : config.MONGODB_URI;
+
 (async () => {
-  await connect(config.DEV_MONGODB_URI);
+  await connect(mongoUri);
 
   if (process.env.NODE_ENV === 'development') {
     await resetDatabase();
