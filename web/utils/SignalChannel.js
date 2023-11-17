@@ -58,7 +58,7 @@ class SignalChannel {
           * type: 'register'
           * sender: string
           * target: 'server'
-          * clientType: string
+          * clientType: 'user' | 'camera'
           * data: {
             * token: string
             * inRegistrationProcess: boolean
@@ -74,12 +74,43 @@ class SignalChannel {
             * token: string
           }
         }
+    * - *ice-candidate*
+    *    - purpose: Relays ice candidates to the other client
+    *    - message: {
+    *       type: 'ice-candidate',
+    *       sender: string,
+    *       target: 'user' | 'camera',
+    *       clientType: 'user' | 'camera',
+    *       data: { candidate }
+    *   }
+    *
+    * - *offer*
+    *     - purpose: Relays offers from users to cameras
+      *  - message: {
+      *      type: 'offer',
+      *       sender: string,
+      *       target: string,
+      *       clientType: 'user',
+      *       data: { offer }
+      *   }
+
+  * - *answer*
+  *     - purpose: Relays answers from cameras to users
+    *   - message: {
+    *     type: 'answer',
+    *     sender: string,
+    *     target: string,
+    *     clientType: 'camera',
+    *     data: { answer }
+    *   }
    * @param {*} ws
    * @param {*} message
    */
   async onMessage(ws, message) {
     const parsedMessage = JSON.parse(message);
-    const { type, sender, clientType } = parsedMessage;
+    const {
+      type, sender, clientType, target,
+    } = parsedMessage;
 
     if (type === 'register') {
       if (clientType === 'user') {
@@ -90,6 +121,7 @@ class SignalChannel {
           ws.clientType = clientType;
           ws.id = sender;
           ws.verified = !parsedMessage.data.inRegistrationProcess;
+          ws.registeredCameras = parsedMessage.data.registeredCameras;
           this.userClients[sender] = ws;
 
           console.log('Registered user: ', sender);
@@ -128,11 +160,12 @@ class SignalChannel {
     } else if (type === 'camera-setup') {
       const { cameraId, token } = parsedMessage.data;
       const isUserMessageTokenValid = await userService.validateUserMessageToken(sender, token);
+      const camera = this.cameraClients[cameraId];
 
       if (isUserMessageTokenValid) {
         let responseType;
 
-        if (this.cameraClients[cameraId]) {
+        if (camera) {
           responseType = 'camera-setup-success';
         } else {
           responseType = 'camera-setup-error';
@@ -151,14 +184,126 @@ class SignalChannel {
         console.log('Camera setup error - unauthorized: ', sender);
         ws.close();
       }
+    } else {
+      // drop connections if connection hasn't been registered/verified
+      // eslint-disable-next-line no-lonely-if
+      if (!ws.id || !ws.id === sender) {
+        console.log('Message error - unauthorized');
+        ws.close();
+        // eslint-disable-next-line no-useless-return
+        return;
+      }
+
+      // handling the rest of the message types.
+      // connections past this point can be assumed to be verified
+
+      switch (type) {
+        case 'ice-candidate': {
+          let targetClient;
+
+          // if the sender is a user, the target must be a camera and vice versa
+          if (clientType === 'user') {
+            try {
+              if (await userService.isUserAuthorizedForCamera(sender, target)) {
+                targetClient = this.cameraClients[target];
+              }
+            } catch (error) {
+              console.error('Ice candidate error: ', error);
+            }
+          } else if (clientType === 'camera') {
+            targetClient = this.userClients[target];
+          }
+
+          if (!targetClient) {
+            console.log('Target client not found: ', target);
+            return;
+          }
+
+          console.log('Sending ice candidate to target: ', target);
+
+          targetClient.send(message);
+          break;
+        }
+
+        case 'offer': {
+          // only users should be able to send offers but we'll check anyway
+          if (clientType === 'user') {
+            try {
+              if (await userService.isUserAuthorizedForCamera(sender, target)) {
+                const camera = this.cameraClients[target];
+
+                if (!camera) {
+                  console.log('Camera not found: ', target);
+                  return;
+                }
+
+                console.log('Sending offer to camera: ', target);
+                camera.send(message);
+              } else {
+                console.log('Offer error - unauthorized: ', sender);
+              }
+            } catch (error) {
+              console.error('Offer error: ', error);
+            }
+          }
+
+          break;
+        }
+
+        case 'answer': {
+          // only cameras should be able to send answers but we'll check anyway
+          if (clientType === 'camera') {
+            try {
+              if (await userService.isUserAuthorizedForCamera(target, sender)) {
+                const user = this.userClients[target];
+
+                if (!user) {
+                  console.log('User not found: ', target);
+                  return;
+                }
+
+                console.log('Sending answer to user: ', target);
+
+                user.send(JSON.stringify(parsedMessage));
+              } else {
+                console.log('Answer error - unauthorized: ', sender);
+              }
+            } catch (error) {
+              console.error('Answer error: ', error);
+            }
+          }
+
+          break;
+        }
+
+        default: {
+          console.log('Message error - unknown type');
+          ws.close();
+        }
+      }
     }
   }
 
   onClose(ws) {
     return () => {
-      console.log(`Client disconnected: ${ws.id}`);
+      console.log(`Client disconnected: ${ws.id ?? 'unknown'}`);
 
       if (ws.clientType === 'user') {
+        // close all of the user's camera connections
+        if (ws.registeredCameras) {
+          ws.registeredCameras.forEach((cameraId) => {
+            const camera = this.cameraClients[cameraId];
+
+            if (camera) {
+              camera.send(JSON.stringify({
+                type: 'close-webrtc',
+                sender: 'server',
+                target: cameraId,
+              }));
+            }
+          });
+        }
+
         delete this.userClients[ws.id];
       } else if (ws.clientType === 'camera') {
         delete this.cameraClients[ws.id];

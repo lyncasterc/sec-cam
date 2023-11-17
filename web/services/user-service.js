@@ -1,4 +1,4 @@
-import { User } from '../mongo/index.js';
+import { User, Camera } from '../mongo/index.js';
 
 /**
  * Validates if the given token matches the message token of the user with the given username.
@@ -62,8 +62,20 @@ async function updateUserByUsername(username, update) {
   }
 }
 
+async function isUserAuthorizedForCamera(username, cameraId) {
+  const user = await User.findOne({ username });
+  const camera = await Camera.findOne({ cameraId });
+
+  if (!user) {
+    return false;
+  }
+
+  return user.registeredCams.map((id) => id.toString()).includes(camera.id);
+}
+
 export default {
   validateUserMessageToken,
   deleteUserByUsername,
   updateUserByUsername,
+  isUserAuthorizedForCamera,
 };
