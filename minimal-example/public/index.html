@@ -98,10 +98,10 @@
     startBtn.onclick = async () => {
       console.log('Starting WebRTC...');
       try {
-        const offer = await pc.createOffer({
-          offerToReceiveAudio: false,
-          offerToReceiveVideo: true,
-        });
+
+        const transceiver = pc.addTransceiver('video', {direction: 'recvonly'});
+
+        const offer = await pc.createOffer();
 
         await pc.setLocalDescription(offer);
 

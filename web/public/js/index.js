@@ -98,10 +98,9 @@ viewBtns.forEach((viewBtn) => {
     viewBtn.disabled = true;
 
     try {
-      const offer = await pc.createOffer({
-        offerToReceiveAudio: false,
-        offerToReceiveVideo: true,
-      });
+      pc.addTransceiver('video', { direction: 'recvonly' });
+
+      const offer = await pc.createOffer();
 
       await pc.setLocalDescription(offer);
 
