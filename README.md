@@ -31,7 +31,7 @@ I separate this application into 4 logical components:
     - **Offer and Answer**: Handles the exchange of WebRTC offers and answers between users and cameras. Offers are sent from users to cameras, and answers are sent from cameras to users.
 - The class also includes methods for message handling (`onMessage`), connection closure (`onClose`), camera token validation (`validateCameraToken`), and checking camera connection status (`isCameraConnected`).
 ### The camera
-- The camera component of the SecCam project is implemented in Python. The script uses several libraries, such as `aiortc` for WebRTC functionalities, `websockets` for communication with the signal server, and `asyncio` for asynchronous programming.
+- The camera component of the project is implemented in Python. The script uses several libraries, such as `aiortc` for WebRTC functionalities, `websockets` for communication with the signal server, and `asyncio` for asynchronous programming.
 - The process begins with the camera establishing a WebSocket connection to the signal server. It registers itself using a unique camera ID and an HMAC signature for authentication.
 - The script is designed to respond to specific message types sent by the signal server:
     - **Offer**: When an offer message is received from a user, the script sets up a WebRTC peer connection. This includes creating and sending an answer back to the user through the signal server.
